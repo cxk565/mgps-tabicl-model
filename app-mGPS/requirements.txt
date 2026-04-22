@@ -8,4 +8,4 @@ shap
 matplotlib
 transformers
 huggingface_hub
-git+https://github.com/soda-inria/tabicl.git
+tabicl==2.0.2
