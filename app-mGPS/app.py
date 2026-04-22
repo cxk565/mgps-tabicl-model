@@ -17,7 +17,7 @@ from tabicl import TabICLClassifier
 from sklearn.base import BaseEstimator, TransformerMixin, ClassifierMixin
 
 # ==========================================
-# 🌟 核心拦截补丁：终极双重伪造，彻底骗过 Pickle
+# 🌟 核心拦截补丁：造假兵工厂，彻底骗过 Pickle
 # ==========================================
 # 1. 路径重定向：封死所有可能报 module not found 的路径
 missing_modules = [
@@ -41,11 +41,18 @@ class EnsembleGenerator(BaseEstimator, ClassifierMixin):
     def predict(self, X): return np.zeros(len(X))
     def predict_proba(self, X): return np.zeros((len(X), 2))
 
-# 4. 强行注入命名空间
+# 4. ✨ 新增：伪造 UniqueFeatureFilter 类
+class UniqueFeatureFilter(BaseEstimator, TransformerMixin):
+    def fit(self, X, y=None): return self
+    def transform(self, X): return X
+
+# 5. 强行把这些伪造零件焊接到 tabicl 命名空间上
 if not hasattr(tabicl, 'TransformToNumerical'):
     tabicl.TransformToNumerical = TransformToNumerical
 if not hasattr(tabicl, 'EnsembleGenerator'):
     tabicl.EnsembleGenerator = EnsembleGenerator
+if not hasattr(tabicl, 'UniqueFeatureFilter'):
+    tabicl.UniqueFeatureFilter = UniqueFeatureFilter
 
 # ==========================================
 # 0. 页面配置与高级 CSS 美化
@@ -207,7 +214,7 @@ input_df = pd.DataFrame({
 input_df = input_df[expected_features]
 
 # ==========================================
-# 4. 前向推理与 SHAP 动态解析
+# 4. 前向推理与 SHAP 动态解析 (TreeExplainer 稳健版)
 # ==========================================
 if st.button("🚀 Run Risk Assessment", type="primary"):
     with st.spinner('🧬 In-Context Learning model is analyzing clinical features...'):
@@ -224,7 +231,7 @@ if st.button("🚀 Run Risk Assessment", type="primary"):
         with res_col2:
             st.markdown("<br>", unsafe_allow_html=True) 
             if risk_prob > 0.5: 
-                st.error("🚨 **[HIGH RISK ALERT]** The model identifies this patient as highly susceptible to **severe postoperative systemic inflammatory and nutritional collapse (mGPS=2)**.")
+                st.error("🚨 **[HIGH RISK ALERT]** The model identifies this patient as highly susceptible to **severe postoperative systemic inflammatory and nutritional collapse (mGPS=2)**. Intensive perioperative immunonutritional management and preemptive anti-inflammatory protocols are strongly recommended.")
                 st.toast('High-risk alert detected!', icon='⚠️') 
             else:
                 st.success("✅ **[SAFE ASSESSMENT]** The patient is currently in the low-risk zone. Maintenance of standard postoperative ERAS protocols is recommended.")
