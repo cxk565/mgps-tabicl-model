@@ -14,21 +14,28 @@ matplotlib.use('Agg')
 # ✨ 引入 TabICLv2 核心
 import tabicl
 from tabicl import TabICLClassifier
+from sklearn.base import BaseEstimator, TransformerMixin
 
 # ==========================================
-# 🌟 核心拦截补丁：解决 Pickle 寻找旧版包路径的问题
+# 🌟 核心拦截补丁：伪造缺失的类和路径，彻底骗过 Pickle
 # ==========================================
+# 1. 路径重定向
 missing_modules = [
-    'tabicl.sklearn',
-    'tabicl.sklearn.classifier',
-    'tabicl.sklearn.preprocessing',
-    'tabicl.sklearn.metrics',
-    'tabicl.sklearn.utils',
-    'tabicl.ensemble'
+    'tabicl.sklearn', 'tabicl.sklearn.classifier', 
+    'tabicl.sklearn.preprocessing', 'tabicl.sklearn.metrics', 
+    'tabicl.sklearn.utils', 'tabicl.ensemble'
 ]
 for mod in missing_modules:
     if mod not in sys.modules:
         sys.modules[mod] = tabicl
+
+# 2. 伪造 TransformToNumerical 类（它必须继承 sklearn 的基类）
+class TransformToNumerical(BaseEstimator, TransformerMixin):
+    def fit(self, X, y=None): return self
+    def transform(self, X): return X
+
+# 3. 强行注入命名空间
+tabicl.TransformToNumerical = TransformToNumerical
 
 # ==========================================
 # 0. 页面配置与高级 CSS 美化
@@ -113,13 +120,14 @@ def load_model():
         raise FileNotFoundError(f"Model file not found: {model_path}")
         
     with open(model_path, 'rb') as f:
+        # 在 pickle 加载时，它会自动去 tabicl 模块下找 TransformToNumerical
         model = pickle.load(f)
     return model
 
 try:
     model = load_model()
 except Exception as e:
-    st.error(f"🚨 Model loading failed. Please ensure 'tabicl_model.pkl' is uploaded. Error details: {e}")
+    st.error(f"🚨 Model loading failed. Error details: {e}")
     st.stop()
 
 # ==========================================
@@ -174,7 +182,6 @@ with col4:
     st.number_input("Fbg (g/L)", min_value=1.0, max_value=10.0, step=0.1, format="%.2f", key="Fbg_num", on_change=sync_inputs, args=("Fbg_num", "Fbg_slider"))
     st.number_input("Ca (mmol/L)", min_value=1.50, max_value=3.00, step=0.01, format="%.2f", key="Ca_num", on_change=sync_inputs, args=("Ca_num", "Ca_slider"))
 
-# ⚠️ 顺序与你的 Excel 截图完全一致
 expected_features = ['PA', 'Age', 'Fbg', 'ALB', 'ChE', 'Lymph%', 'PLT', 'Ca']
 
 input_df = pd.DataFrame({
@@ -219,7 +226,6 @@ if st.button("🚀 Run Risk Assessment", type="primary"):
         st.info("💡 **Interpretation Guide:** Explore different tabs to view the explanations. Red color indicates risk-increasing factors, while blue indicates protective factors.")
         
         try:
-            # ✨ 使用最稳健的 TreeExplainer
             explainer = shap.TreeExplainer(model)
             shap_values = explainer.shap_values(input_df)
             
