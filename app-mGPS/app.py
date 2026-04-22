@@ -5,13 +5,30 @@ import pickle
 import shap
 import matplotlib.pyplot as plt
 import os
+import sys
 
 # 强制后台绘图防止多线程崩溃
 import matplotlib
 matplotlib.use('Agg')
 
 # ✨ 引入 TabICLv2 核心
+import tabicl
 from tabicl import TabICLClassifier
+
+# ==========================================
+# 🌟 核心拦截补丁：解决 Pickle 寻找旧版包路径的问题
+# ==========================================
+missing_modules = [
+    'tabicl.sklearn',
+    'tabicl.sklearn.classifier',
+    'tabicl.sklearn.preprocessing',
+    'tabicl.sklearn.metrics',
+    'tabicl.sklearn.utils',
+    'tabicl.ensemble'
+]
+for mod in missing_modules:
+    if mod not in sys.modules:
+        sys.modules[mod] = tabicl
 
 # ==========================================
 # 0. 页面配置与高级 CSS 美化
@@ -85,7 +102,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. 核心引擎加载 (极简纯净版)
+# 2. 核心引擎加载
 # ==========================================
 @st.cache_resource 
 def load_model():
