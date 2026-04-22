@@ -10,9 +10,8 @@ import os
 import matplotlib
 matplotlib.use('Agg')
 
-# ✨ 引入 TabICLv2 核心与 SHAP 模块
+# ✨ 引入 TabICLv2 核心
 from tabicl import TabICLClassifier
-from tabicl.shap import get_shap_values
 
 # ==========================================
 # 0. 页面配置与高级 CSS 美化
@@ -107,7 +106,7 @@ except Exception as e:
     st.stop()
 
 # ==========================================
-# 3. 侧边栏与主界面双向绑定 (🌟8大核心特征)
+# 3. 侧边栏与主界面双向绑定 (🌟 严格匹配 Excel 表头)
 # ==========================================
 default_values = {
     'PA': 200.0, 'Age': 65.0, 'Fbg': 3.0, 
@@ -158,7 +157,7 @@ with col4:
     st.number_input("Fbg (g/L)", min_value=1.0, max_value=10.0, step=0.1, format="%.2f", key="Fbg_num", on_change=sync_inputs, args=("Fbg_num", "Fbg_slider"))
     st.number_input("Ca (mmol/L)", min_value=1.50, max_value=3.00, step=0.01, format="%.2f", key="Ca_num", on_change=sync_inputs, args=("Ca_num", "Ca_slider"))
 
-# ⚠️ 确保此顺序与你干净的 8变量模型 训练时完全一致！
+# ⚠️ 顺序与你的 Excel 截图完全一致
 expected_features = ['PA', 'Age', 'Fbg', 'ALB', 'ChE', 'Lymph%', 'PLT', 'Ca']
 
 input_df = pd.DataFrame({
@@ -175,9 +174,9 @@ input_df = pd.DataFrame({
 input_df = input_df[expected_features]
 
 # ==========================================
-# 4. TabICLv2 前向推理与 SHAP 动态解析 (原生版)
+# 4. 前向推理与 SHAP 动态解析 (TreeExplainer 稳健版)
 # ==========================================
-if st.button("🚀 Run TabICLv2 Risk Assessment", type="primary"):
+if st.button("🚀 Run Risk Assessment", type="primary"):
     with st.spinner('🧬 In-Context Learning model is analyzing clinical features...'):
         
         risk_prob = model.predict_proba(input_df)[0][1] 
@@ -199,33 +198,25 @@ if st.button("🚀 Run TabICLv2 Risk Assessment", type="primary"):
                 st.balloons() 
 
         st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("### 🧠 Risk Factor Attribution (TabICLv2 Native SHAP)")
+        st.markdown("### 🧠 Risk Factor Attribution (Real-time SHAP)")
         st.info("💡 **Interpretation Guide:** Explore different tabs to view the explanations. Red color indicates risk-increasing factors, while blue indicates protective factors.")
         
         try:
-            # ✨ 调用 TabICLv2 官方原生高速 SHAP 解析器
-            shap_vals_raw = get_shap_values(
-                estimator=model,
-                X_test=input_df,
-                attribute_names=expected_features
-            )
+            # ✨ 使用最稳健的 TreeExplainer
+            explainer = shap.TreeExplainer(model)
+            shap_values = explainer.shap_values(input_df)
             
-            # ✨ 彻底剥离 Explanation 外壳
-            vals_matrix = shap_vals_raw.values if hasattr(shap_vals_raw, 'values') else shap_vals_raw
-            
-            # ✨ 精准维度切片提取正类 1D 数组
-            if len(vals_matrix.shape) == 3:
-                shap_val_single = vals_matrix[0, :, 1]
-            elif len(vals_matrix.shape) == 2:
-                shap_val_single = vals_matrix[0]
+            if isinstance(shap_values, list):
+                shap_val_single = shap_values[1][0] 
+                base_val = explainer.expected_value[1]
             else:
-                shap_val_single = vals_matrix
-            
-            base_val = risk_prob - np.sum(shap_val_single)
-            
-            # 用纯数字组装 Explanation 对象
-            exp = shap.Explanation(values=shap_val_single, base_values=base_val, 
-                                   data=input_df.iloc[0], feature_names=expected_features)
+                shap_val_single = shap_values[0]
+                base_val = explainer.expected_value
+
+            exp = shap.Explanation(values=shap_val_single, 
+                                   base_values=base_val, 
+                                   data=input_df.iloc[0], 
+                                   feature_names=expected_features)
             
             tab1, tab2, tab3, tab4 = st.tabs(["🌊 Waterfall Plot", "⚖️ Force Plot", "📈 Decision Plot", "📊 Bar Plot"])
             
