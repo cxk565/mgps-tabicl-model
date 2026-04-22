@@ -173,11 +173,12 @@ input_df = pd.DataFrame({
 input_df = input_df[expected_features]
 
 # ==========================================
-# 4. 前向推理与 SHAP 动态解析 (TreeExplainer 稳健版)
+# 4. 前向推理与 SHAP 动态解析 (万能黑盒 KernelExplainer 版)
 # ==========================================
 if st.button("🚀 Run Risk Assessment", type="primary"):
     with st.spinner('🧬 In-Context Learning model is analyzing clinical features...'):
         
+        # 1. 核心数学前向推理
         risk_prob = model.predict_proba(input_df)[0][1] 
         
         st.markdown("---")
@@ -201,16 +202,28 @@ if st.button("🚀 Run Risk Assessment", type="primary"):
         st.info("💡 **Interpretation Guide:** Explore different tabs to view the explanations. Red color indicates risk-increasing factors, while blue indicates protective factors.")
         
         try:
-            explainer = shap.TreeExplainer(model)
-            shap_values = explainer.shap_values(input_df)
+            # ✨ 终极黑盒解法：构造一个标准的“基准患者”作为解释的参考系
+            background_df = pd.DataFrame([{
+                'PA': 200.0, 'Age': 65.0, 'Fbg': 3.0, 
+                'ALB': 38.0, 'ChE': 6000.0, 'Lymph%': 25.0, 
+                'PLT': 200.0, 'Ca': 2.30
+            }])[expected_features]
             
-            if isinstance(shap_values, list):
-                shap_val_single = shap_values[1][0] 
-                base_val = explainer.expected_value[1]
-            else:
-                shap_val_single = shap_values[0]
-                base_val = explainer.expected_value
+            # 包装一个极其干净的预测函数，只吐出“正类（患病）概率”，防止多维数组把 SHAP 搞晕
+            def predict_positive_prob(X):
+                return model.predict_proba(X)[:, 1]
+            
+            # 使用万能的 KernelExplainer
+            explainer = shap.KernelExplainer(predict_positive_prob, background_df)
+            
+            # 因为只输入了一行数据，屏蔽啰嗦的进度条
+            shap_values_raw = explainer.shap_values(input_df, silent=True)
+            
+            # 提取单行数据的一维 SHAP 数组
+            shap_val_single = shap_values_raw[0] if isinstance(shap_values_raw, list) else shap_values_raw[0]
+            base_val = explainer.expected_value[0] if isinstance(explainer.expected_value, (list, np.ndarray)) else explainer.expected_value
 
+            # 组装纯净的 Explanation 对象
             exp = shap.Explanation(values=shap_val_single, 
                                    base_values=base_val, 
                                    data=input_df.iloc[0], 
