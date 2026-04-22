@@ -5,73 +5,13 @@ import pickle
 import shap
 import matplotlib.pyplot as plt
 import os
-import sys
 
 # 强制后台绘图防止多线程崩溃
 import matplotlib
 matplotlib.use('Agg')
 
 # ✨ 引入 TabICLv2 核心
-import tabicl
 from tabicl import TabICLClassifier
-from sklearn.base import BaseEstimator, TransformerMixin, ClassifierMixin
-
-# ==========================================
-# 🌟 核心拦截补丁：终极造假兵工厂，一次性骗过 Pickle 的所有检查
-# ==========================================
-# 1. 路径重定向：封死所有可能报 module not found 的路径
-missing_modules = [
-    'tabicl.sklearn', 'tabicl.sklearn.classifier', 
-    'tabicl.sklearn.preprocessing', 'tabicl.sklearn.metrics', 
-    'tabicl.sklearn.utils', 'tabicl.ensemble', 'tabicl.pipeline'
-]
-for mod in missing_modules:
-    if mod not in sys.modules:
-        sys.modules[mod] = tabicl
-
-# 2. 伪造 TransformToNumerical 类
-class TransformToNumerical(BaseEstimator, TransformerMixin):
-    def fit(self, X, y=None): return self
-    def transform(self, X): return X
-
-# 3. 伪造 EnsembleGenerator 类
-class EnsembleGenerator(BaseEstimator, ClassifierMixin):
-    def __init__(self, *args, **kwargs): pass
-    def fit(self, X, y=None): return self
-    def predict(self, X): return np.zeros(len(X))
-    def predict_proba(self, X): return np.zeros((len(X), 2))
-
-# 4. 伪造 UniqueFeatureFilter 类
-class UniqueFeatureFilter(BaseEstimator, TransformerMixin):
-    def fit(self, X, y=None): return self
-    def transform(self, X): return X
-
-# 5. 伪造 PreprocessingPipeline 类
-class PreprocessingPipeline(BaseEstimator, TransformerMixin):
-    def __init__(self, *args, **kwargs): pass
-    def fit(self, X, y=None): return self
-    def transform(self, X): return X
-
-# 6. 伪造 CustomStandardScaler 类 (带智能数据缩放兼容)
-class CustomStandardScaler(BaseEstimator, TransformerMixin):
-    def fit(self, X, y=None): return self
-    def transform(self, X): 
-        if hasattr(self, 'mean_') and hasattr(self, 'scale_'):
-            return (X - self.mean_) / self.scale_
-        return X
-
-# 7. ✨ 新增：伪造 OutlierRemover 类
-class OutlierRemover(BaseEstimator, TransformerMixin):
-    def fit(self, X, y=None): return self
-    def transform(self, X): return X
-
-# 8. 强行把这些伪造零件焊接到 tabicl 命名空间上
-if not hasattr(tabicl, 'TransformToNumerical'): tabicl.TransformToNumerical = TransformToNumerical
-if not hasattr(tabicl, 'EnsembleGenerator'): tabicl.EnsembleGenerator = EnsembleGenerator
-if not hasattr(tabicl, 'UniqueFeatureFilter'): tabicl.UniqueFeatureFilter = UniqueFeatureFilter
-if not hasattr(tabicl, 'PreprocessingPipeline'): tabicl.PreprocessingPipeline = PreprocessingPipeline
-if not hasattr(tabicl, 'CustomStandardScaler'): tabicl.CustomStandardScaler = CustomStandardScaler
-if not hasattr(tabicl, 'OutlierRemover'): tabicl.OutlierRemover = OutlierRemover
 
 # ==========================================
 # 0. 页面配置与高级 CSS 美化
@@ -145,7 +85,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. 核心引擎加载
+# 2. 核心引擎加载 (零补丁纯净版)
 # ==========================================
 @st.cache_resource 
 def load_model():
