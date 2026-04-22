@@ -106,12 +106,12 @@ except Exception as e:
     st.stop()
 
 # ==========================================
-# 3. 侧边栏与主界面双向绑定
+# 3. 侧边栏与主界面双向绑定 (✨ 已更新专属默认值)
 # ==========================================
 default_values = {
-    'PA': 200.0, 'Age': 65.0, 'Fbg': 3.0, 
-    'ALB': 38.0, 'ChE': 6000.0, 'Lymph_pct': 25.0, 
-    'PLT': 200.0, 'Ca': 2.30
+    'PA': 55.0, 'Age': 76.5, 'Fbg': 3.37, 
+    'ALB': 26.3, 'ChE': 1218.0, 'Lymph_pct': 17.5, 
+    'PLT': 253.0, 'Ca': 2.02
 }
 
 for key, val in default_values.items():
@@ -129,15 +129,18 @@ st.sidebar.markdown("---")
 st.sidebar.markdown("### 🎛️ Rapid Parameter Adjustment")
 
 with st.sidebar.expander("👤 Demographics & Nutrition", expanded=True):
-    st.slider("Age (Years)", 18.0, 100.0, step=1.0, key="Age_slider", on_change=sync_inputs, args=("Age_slider", "Age_num"))
-    st.slider("Prealbumin (PA) mg/L", 50.0, 500.0, step=1.0, key="PA_slider", on_change=sync_inputs, args=("PA_slider", "PA_num"))
+    # 调整了 Age 的步长为 0.5 适配 76.5，PA 的最小值和步长
+    st.slider("Age (Years)", 18.0, 100.0, step=0.5, key="Age_slider", on_change=sync_inputs, args=("Age_slider", "Age_num"))
+    st.slider("Prealbumin (PA) mg/L", 10.0, 500.0, step=1.0, key="PA_slider", on_change=sync_inputs, args=("PA_slider", "PA_num"))
     st.slider("Albumin (ALB) g/L", 10.0, 60.0, step=0.1, key="ALB_slider", on_change=sync_inputs, args=("ALB_slider", "ALB_num"))
-    st.slider("Cholinesterase (ChE) U/L", 1000.0, 15000.0, step=100.0, key="ChE_slider", on_change=sync_inputs, args=("ChE_slider", "ChE_num"))
+    # 调整了 ChE 的步长为 1.0 适配 1218
+    st.slider("Cholinesterase (ChE) U/L", 100.0, 15000.0, step=1.0, key="ChE_slider", on_change=sync_inputs, args=("ChE_slider", "ChE_num"))
 
 with st.sidebar.expander("🩸 Immuno-coagulation Profile", expanded=True):
     st.slider("Lymphocyte Percentage (Lymph%)", 5.0, 60.0, step=0.1, key="Lymph_pct_slider", on_change=sync_inputs, args=("Lymph_pct_slider", "Lymph_pct_num"))
     st.slider("Platelets (PLT) ×10^9/L", 50.0, 800.0, step=1.0, key="PLT_slider", on_change=sync_inputs, args=("PLT_slider", "PLT_num"))
-    st.slider("Fibrinogen (Fbg) g/L", 1.0, 10.0, step=0.1, key="Fbg_slider", on_change=sync_inputs, args=("Fbg_slider", "Fbg_num"))
+    # 调整了 Fbg 的步长为 0.01 适配 3.37
+    st.slider("Fibrinogen (Fbg) g/L", 1.0, 10.0, step=0.01, key="Fbg_slider", on_change=sync_inputs, args=("Fbg_slider", "Fbg_num"))
     st.slider("Serum Calcium (Ca) mmol/L", 1.50, 3.00, step=0.01, key="Ca_slider", on_change=sync_inputs, args=("Ca_slider", "Ca_num"))
 
 st.markdown("### 👨‍⚕️ Clinical Parameter Input Matrix")
@@ -145,16 +148,16 @@ st.markdown("*(Enter exact values below, or use the sidebar sliders to adjust sy
 
 col1, col2, col3, col4 = st.columns(4)
 with col1:
-    st.number_input("Age (Years)", min_value=18.0, max_value=100.0, step=1.0, format="%.0f", key="Age_num", on_change=sync_inputs, args=("Age_num", "Age_slider"))
-    st.number_input("PA (mg/L)", min_value=50.0, max_value=500.0, step=1.0, format="%.1f", key="PA_num", on_change=sync_inputs, args=("PA_num", "PA_slider"))
+    st.number_input("Age (Years)", min_value=18.0, max_value=100.0, step=0.5, format="%.1f", key="Age_num", on_change=sync_inputs, args=("Age_num", "Age_slider"))
+    st.number_input("PA (mg/L)", min_value=10.0, max_value=500.0, step=1.0, format="%.1f", key="PA_num", on_change=sync_inputs, args=("PA_num", "PA_slider"))
 with col2:
     st.number_input("ALB (g/L)", min_value=10.0, max_value=60.0, step=0.1, format="%.1f", key="ALB_num", on_change=sync_inputs, args=("ALB_num", "ALB_slider"))
-    st.number_input("ChE (U/L)", min_value=1000.0, max_value=15000.0, step=100.0, format="%.0f", key="ChE_num", on_change=sync_inputs, args=("ChE_num", "ChE_slider"))
+    st.number_input("ChE (U/L)", min_value=100.0, max_value=15000.0, step=1.0, format="%.0f", key="ChE_num", on_change=sync_inputs, args=("ChE_num", "ChE_slider"))
 with col3:
     st.number_input("Lymph (%)", min_value=5.0, max_value=60.0, step=0.1, format="%.1f", key="Lymph_pct_num", on_change=sync_inputs, args=("Lymph_pct_num", "Lymph_pct_slider"))
     st.number_input("PLT (×10^9/L)", min_value=50.0, max_value=800.0, step=1.0, format="%.0f", key="PLT_num", on_change=sync_inputs, args=("PLT_num", "PLT_slider"))
 with col4:
-    st.number_input("Fbg (g/L)", min_value=1.0, max_value=10.0, step=0.1, format="%.2f", key="Fbg_num", on_change=sync_inputs, args=("Fbg_num", "Fbg_slider"))
+    st.number_input("Fbg (g/L)", min_value=1.0, max_value=10.0, step=0.01, format="%.2f", key="Fbg_num", on_change=sync_inputs, args=("Fbg_num", "Fbg_slider"))
     st.number_input("Ca (mmol/L)", min_value=1.50, max_value=3.00, step=0.01, format="%.2f", key="Ca_num", on_change=sync_inputs, args=("Ca_num", "Ca_slider"))
 
 expected_features = ['PA', 'Age', 'Fbg', 'ALB', 'ChE', 'Lymph%', 'PLT', 'Ca']
