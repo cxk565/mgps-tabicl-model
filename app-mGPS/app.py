@@ -18,7 +18,7 @@ from tabicl.shap import get_shap_values
 # 0. 页面配置与高级 CSS 美化
 # ==========================================
 st.set_page_config(
-    page_title="Hypoalbuminemia Risk Predictor (TabICLv2)",
+    page_title="mGPS=2 Collapse Predictor",
     page_icon="⚕️",
     layout="wide",
     initial_sidebar_state="expanded" 
@@ -74,19 +74,19 @@ col_logo, col_title = st.columns([1, 8])
 with col_logo:
     st.image("https://cdn-icons-png.flaticon.com/512/3004/3004458.png", width=80) 
 with col_title:
-    st.title("Intelligent Warning Platform for Postoperative Hypoalbuminemia Risk in Colon Cancer")
+    st.title("Intelligent Warning Platform for Postoperative mGPS=2 Collapse in Colorectal Cancer")
     st.markdown("**(Powered by TabICLv2: A State-of-the-Art Tabular Foundation Model)**")
 
 st.markdown("""
 <div style='background-color: #EBF5FB; padding: 15px; border-radius: 10px; border-left: 5px solid #2980B9; margin-bottom: 25px;'>
     <span style='color: #154360; font-size: 15px;'>
-    <b>📊 System Introduction:</b> Powered by <b>TabICLv2</b>—an advanced In-Context Learning foundation model—this platform integrates key clinical indicators to dynamically predict the risk of postoperative hypoalbuminemia. It features real-time <b>SHAP (SHapley Additive exPlanations)</b> interpretations, providing clinicians with unprecedented accuracy and explainable decision support.
+    <b>📊 System Introduction:</b> Powered by <b>TabICLv2</b>, this platform integrates 8 refined preoperative clinical indicators to dynamically predict the risk of <b>severe postoperative systemic inflammatory and nutritional collapse (mGPS=2)</b> in patients with <b>Colorectal Cancer (CRC)</b>. It features real-time <b>SHAP (SHapley Additive exPlanations)</b> interpretations, providing surgeons with unprecedented accuracy and explainable decision support at the point of care.
     </span>
 </div>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. 核心引擎加载
+# 2. 核心引擎加载 (极简纯净版)
 # ==========================================
 @st.cache_resource 
 def load_model():
@@ -107,12 +107,12 @@ except Exception as e:
     st.stop()
 
 # ==========================================
-# 3. 侧边栏与主界面双向绑定
+# 3. 侧边栏与主界面双向绑定 (🌟8大核心特征)
 # ==========================================
 default_values = {
-    'ChE': 6664.0, 'Age': 816.0, 'PA': 197.5, 
-    'Crea': 69.7, 'FDP': 1.5, 'Lymph_pct': 24.2, 
-    'CEA': 3.57, 'GLO': 28.6, 'Lymph_count': 1.59
+    'PA': 200.0, 'Age': 65.0, 'Fbg': 3.0, 
+    'ALB': 38.0, 'ChE': 6000.0, 'Lymph_pct': 25.0, 
+    'PLT': 200.0, 'Ca': 2.30
 }
 
 for key, val in default_values.items():
@@ -129,64 +129,53 @@ st.sidebar.success("🟢 Core Engine: TabICLv2 Ready")
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 🎛️ Rapid Parameter Adjustment")
 
-with st.sidebar.expander("👤 Demographics & Hepatorenal", expanded=True):
-    st.slider("Age (Months)", 200.0, 1300.0, step=1.0, key="Age_slider", on_change=sync_inputs, args=("Age_slider", "Age_num"))
-    st.slider("Creatinine (Crea) μmol/L", 10.0, 1200.0, step=0.1, key="Crea_slider", on_change=sync_inputs, args=("Crea_slider", "Crea_num"))
-    st.slider("Prealbumin (PA) mg/L", 10.0, 800.0, step=1.0, key="PA_slider", on_change=sync_inputs, args=("PA_slider", "PA_num"))
-    st.slider("Globulin (GLO) g/L", 10.0, 120.0, step=0.1, key="GLO_slider", on_change=sync_inputs, args=("GLO_slider", "GLO_num"))
+with st.sidebar.expander("👤 Demographics & Nutrition", expanded=True):
+    st.slider("Age (Years)", 18.0, 100.0, step=1.0, key="Age_slider", on_change=sync_inputs, args=("Age_slider", "Age_num"))
+    st.slider("Prealbumin (PA) mg/L", 50.0, 500.0, step=1.0, key="PA_slider", on_change=sync_inputs, args=("PA_slider", "PA_num"))
+    st.slider("Albumin (ALB) g/L", 10.0, 60.0, step=0.1, key="ALB_slider", on_change=sync_inputs, args=("ALB_slider", "ALB_num"))
+    st.slider("Cholinesterase (ChE) U/L", 1000.0, 15000.0, step=100.0, key="ChE_slider", on_change=sync_inputs, args=("ChE_slider", "ChE_num"))
 
-with st.sidebar.expander("🩸 Hematological Indices", expanded=True):
-    st.slider("Lymphocyte Percentage (Lymph%)", 0.0, 100.0, step=0.1, key="Lymph_pct_slider", on_change=sync_inputs, args=("Lymph_pct_slider", "Lymph_pct_num"))
-    st.slider("Lymphocyte Count (×10^9/L)", 0.0, 50.0, step=0.01, key="Lymph_count_slider", on_change=sync_inputs, args=("Lymph_count_slider", "Lymph_count_num"))
-    st.slider("Fibrin Degradation Products (FDP) mg/L", 0.0, 300.0, step=0.01, key="FDP_slider", on_change=sync_inputs, args=("FDP_slider", "FDP_num"))
-    
-with st.sidebar.expander("🔬 Specific Enzymes & Markers", expanded=True):
-    st.slider("Cholinesterase (ChE) U/L", 100.0, 25000.0, step=10.0, key="ChE_slider", on_change=sync_inputs, args=("ChE_slider", "ChE_num"))
-    st.slider("Carcinoembryonic Antigen (CEA) ng/mL", 0.0, 5000.0, step=0.1, key="CEA_slider", on_change=sync_inputs, args=("CEA_slider", "CEA_num"))
+with st.sidebar.expander("🩸 Immuno-coagulation Profile", expanded=True):
+    st.slider("Lymphocyte Percentage (Lymph%)", 5.0, 60.0, step=0.1, key="Lymph_pct_slider", on_change=sync_inputs, args=("Lymph_pct_slider", "Lymph_pct_num"))
+    st.slider("Platelets (PLT) ×10^9/L", 50.0, 800.0, step=1.0, key="PLT_slider", on_change=sync_inputs, args=("PLT_slider", "PLT_num"))
+    st.slider("Fibrinogen (Fbg) g/L", 1.0, 10.0, step=0.1, key="Fbg_slider", on_change=sync_inputs, args=("Fbg_slider", "Fbg_num"))
+    st.slider("Serum Calcium (Ca) mmol/L", 1.50, 3.00, step=0.01, key="Ca_slider", on_change=sync_inputs, args=("Ca_slider", "Ca_num"))
 
 st.markdown("### 👨‍⚕️ Clinical Parameter Input Matrix")
 st.markdown("*(Enter exact values below, or use the sidebar sliders to adjust synchronously)*")
 
 col1, col2, col3, col4 = st.columns(4)
 with col1:
-    st.number_input("Age (Months)", min_value=200.0, max_value=1300.0, step=1.0, format="%.0f", key="Age_num", on_change=sync_inputs, args=("Age_num", "Age_slider"))
-    st.number_input("Crea (μmol/L)", min_value=10.0, max_value=1200.0, step=0.1, format="%.1f", key="Crea_num", on_change=sync_inputs, args=("Crea_num", "Crea_slider"))
+    st.number_input("Age (Years)", min_value=18.0, max_value=100.0, step=1.0, format="%.0f", key="Age_num", on_change=sync_inputs, args=("Age_num", "Age_slider"))
+    st.number_input("PA (mg/L)", min_value=50.0, max_value=500.0, step=1.0, format="%.1f", key="PA_num", on_change=sync_inputs, args=("PA_num", "PA_slider"))
 with col2:
-    st.number_input("PA (mg/L)", min_value=10.0, max_value=800.0, step=1.0, format="%.1f", key="PA_num", on_change=sync_inputs, args=("PA_num", "PA_slider"))
-    st.number_input("GLO (g/L)", min_value=10.0, max_value=120.0, step=0.1, format="%.1f", key="GLO_num", on_change=sync_inputs, args=("GLO_num", "GLO_slider"))
+    st.number_input("ALB (g/L)", min_value=10.0, max_value=60.0, step=0.1, format="%.1f", key="ALB_num", on_change=sync_inputs, args=("ALB_num", "ALB_slider"))
+    st.number_input("ChE (U/L)", min_value=1000.0, max_value=15000.0, step=100.0, format="%.0f", key="ChE_num", on_change=sync_inputs, args=("ChE_num", "ChE_slider"))
 with col3:
-    st.number_input("Lymph (%)", min_value=0.0, max_value=100.0, step=0.1, format="%.1f", key="Lymph_pct_num", on_change=sync_inputs, args=("Lymph_pct_num", "Lymph_pct_slider"))
-    st.number_input("Lymph Count", min_value=0.0, max_value=50.0, step=0.01, format="%.2f", key="Lymph_count_num", on_change=sync_inputs, args=("Lymph_count_num", "Lymph_count_slider"))
+    st.number_input("Lymph (%)", min_value=5.0, max_value=60.0, step=0.1, format="%.1f", key="Lymph_pct_num", on_change=sync_inputs, args=("Lymph_pct_num", "Lymph_pct_slider"))
+    st.number_input("PLT (×10^9/L)", min_value=50.0, max_value=800.0, step=1.0, format="%.0f", key="PLT_num", on_change=sync_inputs, args=("PLT_num", "PLT_slider"))
 with col4:
-    st.number_input("ChE (U/L)", min_value=100.0, max_value=25000.0, step=10.0, format="%.0f", key="ChE_num", on_change=sync_inputs, args=("ChE_num", "ChE_slider"))
-    st.number_input("CEA (ng/mL)", min_value=0.0, max_value=5000.0, step=0.1, format="%.2f", key="CEA_num", on_change=sync_inputs, args=("CEA_num", "CEA_slider"))
+    st.number_input("Fbg (g/L)", min_value=1.0, max_value=10.0, step=0.1, format="%.2f", key="Fbg_num", on_change=sync_inputs, args=("Fbg_num", "Fbg_slider"))
+    st.number_input("Ca (mmol/L)", min_value=1.50, max_value=3.00, step=0.01, format="%.2f", key="Ca_num", on_change=sync_inputs, args=("Ca_num", "Ca_slider"))
 
-col5, col6, col7, col8 = st.columns(4)
-with col5:
-    st.number_input("FDP (mg/L)", min_value=0.0, max_value=300.0, step=0.01, format="%.2f", key="FDP_num", on_change=sync_inputs, args=("FDP_num", "FDP_slider"))
+# ⚠️ 确保此顺序与你干净的 8变量模型 训练时完全一致！
+expected_features = ['PA', 'Age', 'Fbg', 'ALB', 'ChE', 'Lymph%', 'PLT', 'Ca']
 
-
-# ✨ 核心修复：根据 CSV 截图严格排列表头顺序
-expected_features = ['ChE', 'Age', 'PA', 'Crea', 'FDP', 'Lymph%', 'CEA', 'GLO', 'Lymphocyte count']
-
-# 按照截图顺序将 session_state 填入
 input_df = pd.DataFrame({
-    'ChE': [st.session_state["ChE_num"]], 
-    'Age': [st.session_state["Age_num"]], 
     'PA': [st.session_state["PA_num"]], 
-    'Crea': [st.session_state["Crea_num"]],
-    'FDP': [st.session_state["FDP_num"]], 
+    'Age': [st.session_state["Age_num"]], 
+    'Fbg': [st.session_state["Fbg_num"]], 
+    'ALB': [st.session_state["ALB_num"]],
+    'ChE': [st.session_state["ChE_num"]], 
     'Lymph%': [st.session_state["Lymph_pct_num"]], 
-    'CEA': [st.session_state["CEA_num"]], 
-    'GLO': [st.session_state["GLO_num"]],
-    'Lymphocyte count': [st.session_state["Lymph_count_num"]] 
+    'PLT': [st.session_state["PLT_num"]], 
+    'Ca': [st.session_state["Ca_num"]]
 })
 
-# 强制重排顺序，确保绝对一致
 input_df = input_df[expected_features]
 
 # ==========================================
-# 4. TabICLv2 前向推理与 SHAP 动态解析
+# 4. TabICLv2 前向推理与 SHAP 动态解析 (原生版)
 # ==========================================
 if st.button("🚀 Run TabICLv2 Risk Assessment", type="primary"):
     with st.spinner('🧬 In-Context Learning model is analyzing clinical features...'):
@@ -198,15 +187,15 @@ if st.button("🚀 Run TabICLv2 Risk Assessment", type="primary"):
         
         res_col1, res_col2 = st.columns([1, 2])
         with res_col1:
-            st.metric(label="Probability of Hypoalbuminemia", value=f"{risk_prob * 100:.2f} %")
+            st.metric(label="Probability of mGPS=2 Collapse", value=f"{risk_prob * 100:.2f} %")
             
         with res_col2:
             st.markdown("<br>", unsafe_allow_html=True) 
             if risk_prob > 0.5: 
-                st.error("🚨 **[HIGH RISK ALERT]** The model identifies this patient as highly susceptible to **postoperative hypoalbuminemia**. Intensive perioperative nutritional management and enhanced postoperative monitoring are strongly recommended.")
+                st.error("🚨 **[HIGH RISK ALERT]** The model identifies this patient as highly susceptible to **severe postoperative systemic inflammatory and nutritional collapse (mGPS=2)**. Intensive perioperative immunonutritional management and preemptive anti-inflammatory protocols are strongly recommended.")
                 st.toast('High-risk alert detected!', icon='⚠️') 
             else:
-                st.success("✅ **[SAFE ASSESSMENT]** The patient is currently in the low-risk zone. Maintenance of standard postoperative care protocols is recommended.")
+                st.success("✅ **[SAFE ASSESSMENT]** The patient is currently in the low-risk zone. Maintenance of standard postoperative ERAS protocols is recommended.")
                 st.balloons() 
 
         st.markdown("<br>", unsafe_allow_html=True)
@@ -221,10 +210,10 @@ if st.button("🚀 Run TabICLv2 Risk Assessment", type="primary"):
                 attribute_names=expected_features
             )
             
-            # ✨ 终极修复点1：彻底剥离 Explanation 外壳
+            # ✨ 彻底剥离 Explanation 外壳
             vals_matrix = shap_vals_raw.values if hasattr(shap_vals_raw, 'values') else shap_vals_raw
             
-            # ✨ 终极修复点2：精准维度切片提取正类 1D 数组
+            # ✨ 精准维度切片提取正类 1D 数组
             if len(vals_matrix.shape) == 3:
                 shap_val_single = vals_matrix[0, :, 1]
             elif len(vals_matrix.shape) == 2:
@@ -232,10 +221,9 @@ if st.button("🚀 Run TabICLv2 Risk Assessment", type="primary"):
             else:
                 shap_val_single = vals_matrix
             
-            # ✨ 神级Hack：此时的 shap_val_single 必定是 1D 纯数字矩阵，np.sum 完美执行
             base_val = risk_prob - np.sum(shap_val_single)
             
-            # 用纯数字干净、安全地重新组装单一解释的 Explanation 对象
+            # 用纯数字组装 Explanation 对象
             exp = shap.Explanation(values=shap_val_single, base_values=base_val, 
                                    data=input_df.iloc[0], feature_names=expected_features)
             
