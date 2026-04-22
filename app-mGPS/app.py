@@ -23,7 +23,7 @@ from sklearn.base import BaseEstimator, TransformerMixin, ClassifierMixin
 missing_modules = [
     'tabicl.sklearn', 'tabicl.sklearn.classifier', 
     'tabicl.sklearn.preprocessing', 'tabicl.sklearn.metrics', 
-    'tabicl.sklearn.utils', 'tabicl.ensemble'
+    'tabicl.sklearn.utils', 'tabicl.ensemble', 'tabicl.pipeline'
 ]
 for mod in missing_modules:
     if mod not in sys.modules:
@@ -41,18 +41,26 @@ class EnsembleGenerator(BaseEstimator, ClassifierMixin):
     def predict(self, X): return np.zeros(len(X))
     def predict_proba(self, X): return np.zeros((len(X), 2))
 
-# 4. ✨ 新增：伪造 UniqueFeatureFilter 类
+# 4. 伪造 UniqueFeatureFilter 类
 class UniqueFeatureFilter(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None): return self
     def transform(self, X): return X
 
-# 5. 强行把这些伪造零件焊接到 tabicl 命名空间上
+# 5. ✨ 新增：伪造 PreprocessingPipeline 类
+class PreprocessingPipeline(BaseEstimator, TransformerMixin):
+    def __init__(self, *args, **kwargs): pass
+    def fit(self, X, y=None): return self
+    def transform(self, X): return X
+
+# 6. 强行把这些伪造零件焊接到 tabicl 命名空间上
 if not hasattr(tabicl, 'TransformToNumerical'):
     tabicl.TransformToNumerical = TransformToNumerical
 if not hasattr(tabicl, 'EnsembleGenerator'):
     tabicl.EnsembleGenerator = EnsembleGenerator
 if not hasattr(tabicl, 'UniqueFeatureFilter'):
     tabicl.UniqueFeatureFilter = UniqueFeatureFilter
+if not hasattr(tabicl, 'PreprocessingPipeline'):
+    tabicl.PreprocessingPipeline = PreprocessingPipeline
 
 # ==========================================
 # 0. 页面配置与高级 CSS 美化
