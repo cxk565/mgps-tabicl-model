@@ -46,21 +46,27 @@ class UniqueFeatureFilter(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None): return self
     def transform(self, X): return X
 
-# 5. ✨ 新增：伪造 PreprocessingPipeline 类
+# 5. 伪造 PreprocessingPipeline 类
 class PreprocessingPipeline(BaseEstimator, TransformerMixin):
     def __init__(self, *args, **kwargs): pass
     def fit(self, X, y=None): return self
     def transform(self, X): return X
 
-# 6. 强行把这些伪造零件焊接到 tabicl 命名空间上
-if not hasattr(tabicl, 'TransformToNumerical'):
-    tabicl.TransformToNumerical = TransformToNumerical
-if not hasattr(tabicl, 'EnsembleGenerator'):
-    tabicl.EnsembleGenerator = EnsembleGenerator
-if not hasattr(tabicl, 'UniqueFeatureFilter'):
-    tabicl.UniqueFeatureFilter = UniqueFeatureFilter
-if not hasattr(tabicl, 'PreprocessingPipeline'):
-    tabicl.PreprocessingPipeline = PreprocessingPipeline
+# 6. ✨ 新增：伪造 CustomStandardScaler 类 (带智能数据缩放兼容)
+class CustomStandardScaler(BaseEstimator, TransformerMixin):
+    def fit(self, X, y=None): return self
+    def transform(self, X): 
+        # 如果 pickle 成功解包了当年训练时的均值和方差，就应用缩放
+        if hasattr(self, 'mean_') and hasattr(self, 'scale_'):
+            return (X - self.mean_) / self.scale_
+        return X
+
+# 7. 强行把这些伪造零件焊接到 tabicl 命名空间上
+if not hasattr(tabicl, 'TransformToNumerical'): tabicl.TransformToNumerical = TransformToNumerical
+if not hasattr(tabicl, 'EnsembleGenerator'): tabicl.EnsembleGenerator = EnsembleGenerator
+if not hasattr(tabicl, 'UniqueFeatureFilter'): tabicl.UniqueFeatureFilter = UniqueFeatureFilter
+if not hasattr(tabicl, 'PreprocessingPipeline'): tabicl.PreprocessingPipeline = PreprocessingPipeline
+if not hasattr(tabicl, 'CustomStandardScaler'): tabicl.CustomStandardScaler = CustomStandardScaler
 
 # ==========================================
 # 0. 页面配置与高级 CSS 美化
@@ -222,7 +228,7 @@ input_df = pd.DataFrame({
 input_df = input_df[expected_features]
 
 # ==========================================
-# 4. 前向推理与 SHAP 动态解析 (TreeExplainer 稳健版)
+# 4. 前向推理与 SHAP 动态解析
 # ==========================================
 if st.button("🚀 Run Risk Assessment", type="primary"):
     with st.spinner('🧬 In-Context Learning model is analyzing clinical features...'):
